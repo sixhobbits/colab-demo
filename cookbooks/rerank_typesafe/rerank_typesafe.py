@@ -5,7 +5,7 @@
 #                 "cooksafe>=0.3.0,<0.4.0"]
 # ///
 
-# Re-ranking: cookbook version 1
+# Re-ranking: cookbook version 2
 # From https://console.typesafe.ai/docs/cookbooks/rerank_typesafe
 #
 # Run it with `uv run rerank_typesafe.py`, or open it as a notebook: the `# %%` lines
