@@ -5,172 +5,12 @@
 #                 "cooksafe>=0.3.0,<0.4.0"]
 # ///
 
-# Re-ranking: cookbook version 2
-# From https://console.typesafe.ai/docs/cookbooks/rerank_typesafe
-#
-# Run it with `uv run rerank_typesafe.py`, or open it as a notebook: the `# %%` lines
-# split it into cells. It needs no API key: it downloads this cookbook's saved
-# answers and replays them. Set TYPESAFE_API_KEY and DOWNLOAD_CACHE = False to
-# call the API yourself.
+"""Re-ranking, from https://console.typesafe.ai/docs/cookbooks/rerank_typesafe (version 3).
 
-# %% [markdown]
-# # Re-ranking retrieval results with TypeSafe
-#
-# You have thousands of documents, and you need to find the one that answers a specific
-# question.
-#
-# First, use a quick method such as keyword matching to cut those thousands of candidates
-# down to a shortlist of plausible ones. We call this fast search.
-#
-# Fast search is good at that, but it can't tell you which candidate on the shortlist is
-# correct. That's where re-ranking comes in. It scores every candidate on the shortlist
-# against the query directly, and puts the best one first.
-#
-# Both steps run below on 3,565 court opinion passages from the CLERC dataset: BM25 builds a
-# fast search shortlist of 30 candidates for each of 40 queries, then Jev re-ranks each
-# shortlist. With re-ranking, the correct passage lands in first place for 30% of queries, up
-# from 5% with fast search alone.
+Needs no API key: it replays this cookbook's saved answers. To call the API,
+set TYPESAFE_API_KEY and DOWNLOAD_CACHE = False.
+"""
 
-# %% [markdown]
-# ## How do we find one document in thousands?
-#
-# Checking every document against the query, one at a time, takes one comparison per
-# document: millions of documents means millions of comparisons per query. Two steps are
-# faster:
-#
-# 1. Cut the pile down to a short list of likely candidates, using a method fast enough to
-#    run on the whole pile.
-# 2. Apply a more accurate step to that short list, to find the exact right answer.
-
-# %% [markdown]
-# ![Animated diagram: a pile of documents narrows to a fast search shortlist, then re-ranking
-# reorders that shortlist so the correct answer rises to the
-# top](two-step-search-intro-diagram.svg)
-
-# %% [markdown]
-# ## What is fast search?
-#
-# Fast search is any method that can compare a query against every document in a large corpus
-# and quickly return a ranked shortlist. Common methods include keyword search, such as BM25,
-# and dense embeddings, which compare passages by meaning.
-#
-# The first step here is BM25 and nothing else. BM25 ranks passages by shared words.
-# The choice of fast search method is a side issue: re-ranking only ever sees the passages
-# that make the shortlist.
-
-# %% [markdown]
-# ## What is re-ranking?
-#
-# Re-ranking puts the shortlist in a better order. Instead of comparing the query against
-# the whole corpus at once, it scores the query against each candidate on the shortlist and
-# sorts by that score.
-
-# %% [markdown]
-# ![Diagram: a ranked shortlist on the left, an arrow labeled "re-rank," and the re-ordered
-# version on the right with the true answer moving from the middle to the
-# top](rerank-diagram.png)
-
-# %% [markdown]
-# The score can come from a language model. Give it the query and one candidate together
-# and ask how well the candidate answers the query. Re-ranking then finds the best match
-# on the shortlist even when its wording differs from the query's.
-
-# %% [markdown]
-# ## Re-ranking with Jev
-#
-# A re-ranker needs a comparable score for every query-candidate pair.
-#
-# ### What Jev returns
-#
-# With TypeSafe, the scoring request is a yes/no question:
-#
-# ```text
-# Could this candidate passage be from the cited precedent?
-# ```
-#
-# A plain yes or no would not be enough to rank 30 candidates. A `Noul` instead
-# returns a number between 0 and 1, called a
-# [noul](https://console.typesafe.ai/docs/primitives/noul). The noul is Jev's estimate
-# of how likely the answer is to be yes.
-#
-# The question's criteria define what counts as true and false. Jev applies them to
-# every query-candidate pair and returns the noul directly. That noul is the score the
-# application sorts on.
-#
-# In simplified pseudocode, one TypeSafe scoring call looks like this:
-#
-# ```python
-# question = Noul(
-#     instructions="Is this candidate the cited case?",
-#     criteria=NoulCriteria(
-#         true="The candidate states the specific rule the query cites.",
-#         false="The candidate is only on a similar topic.",
-#     ),
-# )
-# response = client.system_one(state={...}, questions={"is_cited_source": question})
-# response.answers["is_cited_source"].noul  # -> 0.87
-# ```
-#
-# To re-rank a shortlist, ask the same question about every candidate and sort by noul,
-# highest first:
-#
-# ```python
-# nouls = {candidate: ask_typesafe(query, candidate) for candidate in shortlist}
-# reranked = sorted(shortlist, key=lambda c: nouls[c], reverse=True)  # highest noul first
-# ```
-
-# %% [markdown]
-# ```mermaid
-# flowchart LR
-#     q["query excerpt<br/><i>one opinion passage,<br/>citation removed</i>"]
-#     sl["shortlist from fast search"]
-#     quest["<b>one Noul</b><br/>could this candidate be<br/>from the cited precedent?<br/><i>criteria fix true and false</i>"]
-#
-#     %% direction LR inside an LR chart keeps each state beside its noul, two columns,
-#     %% so the fan-out is four rows tall instead of eight
-#     subgraph fan["one request per candidate · no request sees another"]
-#         direction LR
-#         d1["state<br/>{query, candidate 1}"] --> n1["noul<br/>0.87"]
-#         d2["state<br/>{query, candidate 2}"] --> n2["noul<br/>0.41"]
-#         dx["⋮"] --> nx["⋮"]
-#         d30["state<br/>{query, candidate n}"] --> n30["noul<br/>0.12"]
-#     end
-#
-#     sort["sort by noul,<br/>highest first"]
-#     out["re-ranked shortlist<br/><i>same candidates, better order</i>"]
-#
-#     q --> fan
-#     sl --> fan
-#     quest --> fan
-#     fan --> sort --> out
-#
-#     %% the elision is not a node, so drop its box and it reads as "and so on"
-#     classDef elide fill:none,stroke:none
-#     class dx,nx elide
-#     linkStyle 2 stroke:none
-# ```
-
-# %% [markdown]
-# ## A re-ranking example
-#
-# Fast search and re-ranking now run on
-# [CLERC](https://aclanthology.org/2025.findings-naacl.441/), a legal retrieval dataset.
-# This example uses 3,565 court opinion passages and 40 queries.
-#
-# ### Setup
-#
-# - `bm25s` and `datasets` build the fast search shortlist.
-# - `typesafe-sdk` and `cooksafe` handle re-ranking and API caching.
-# - `matplotlib` draws the result charts.
-#
-# ```bash
-# pip install bm25s datasets matplotlib 'cooksafe>=0.3.0,<0.4.0'
-# ```
-#
-# No API key is needed to follow along: the code downloads this cookbook's saved answers
-# and replays them. Set `TYPESAFE_API_KEY` only to call the API yourself.
-
-# %%
 import hashlib
 import json
 import os
@@ -196,7 +36,6 @@ client = TypeSafeClient(
     timeout=120.0,
 )
 
-# %%
 EXAMPLES_URL = (
     "https://raw.githubusercontent.com/typesafe-ai/typesafe-public-examples/main/"
     "cookbooks/rerank_typesafe"
@@ -219,25 +58,6 @@ if DOWNLOAD_CACHE:
     download(CACHE.name)
 json_cache = JsonCache(CACHE)
 
-# %% [markdown]
-# ### Ranking the passages with fast search
-#
-# The dataset used here is a corpus of US court opinions, 170 rows pooled together. Each
-# row breaks down like this:
-#
-# - **Query**: an opinion excerpt with a citation removed.
-# - **Gold**: the passage the removed citation pointed to, the one correct answer to the
-#   query.
-# - **Candidates**: every other passage in the corpus, each one something the query could be
-#   matched against by mistake.
-#
-# Of the 170 rows, 40 are picked to evaluate as queries. The other 130 only ever appear as
-# candidates.
-#
-# Fast search loads the corpus and ranks it against every query with BM25. Jev isn't
-# involved yet.
-
-# %%
 CLERC_FILE = (
     "https://huggingface.co/datasets/jhu-clsp/CLERC/resolve/main/"
     "teva_train_dir/train_data.jsonl.gz"
@@ -367,28 +187,6 @@ show(lambda p: bar_chart(
     p,
 ))
 
-# %% [markdown]
-# ### Fast search is unlikely to rank the right passage first
-#
-# The chart shows where fast search puts the correct passage, out of 3,565 candidates.
-#
-# The shortlist contains the right answer for 100% of the 40 queries, but ranks it first
-# only 5% of the time.
-#
-# Re-ranking only reorders the top 30 candidates already on the shortlist. It cannot add a
-# passage that fast search did not select.
-#
-# ### Re-ranking the shortlist with Jev
-#
-# The question Jev answers about each pair is whether the candidate could be the passage
-# the query's removed citation points to. Re-ranking takes three steps:
-#
-# 1. Define that question.
-# 2. Ask it once per candidate on every shortlist: 40 queries times 30 candidates, or 1,200
-#    calls, run concurrently.
-# 3. Sort each shortlist by the noul Jev returns.
-
-# %%
 is_cited_source = Noul(
     instructions=(
         "The query excerpt comes from a US federal court opinion and was written "
@@ -506,30 +304,3 @@ def chart_before_after(
 show(lambda p: chart_before_after(
     {"Fast search": candidates, "+ Jev 1.14 re-rank": reranked}, [1, 5, 10], p
 ))
-
-# %% [markdown]
-# ### Re-ranking moves the right answer toward the top
-#
-# The chart compares fast search against fast search plus re-ranking, at three thresholds.
-# Re-ranking moves the correct passage closer to the top at every one of them:
-#
-# - **Top 1**: 5% → 30%
-# - **Top 5**: 15% → 57%
-# - **Top 10**: 38% → 65%
-
-# %% [markdown]
-# This walkthrough asked one question per pair for clarity. A real application would
-# ask several questions about the same pair in one call. See the [parallel questions
-# cookbook](https://console.typesafe.ai/docs/cookbooks/parallel_questions) and the
-# [Speculative fan-out pattern](https://console.typesafe.ai/docs/patterns/fan-out) for how.
-#
-# ----------------
-#
-# ## What's next
-#
-# - [Noul](https://console.typesafe.ai/docs/primitives/noul), for how Jev turns a yes/no
-#   question into a score.
-# - [Speculative fan-out](https://console.typesafe.ai/docs/patterns/fan-out), for asking
-#   several questions about one document in a single call.
-# - [Line-by-line Search](https://console.typesafe.ai/docs/cookbooks/semantic_find),
-#   for another way to search a corpus by meaning rather than keywords.
