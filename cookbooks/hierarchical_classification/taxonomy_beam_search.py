@@ -6,8 +6,8 @@
 
 """Hierarchical classification, from https://console.typesafe.ai/docs/cookbooks/hierarchical_classification.
 
-Set TYPESAFE_API_KEY first. It replays this cookbook's saved answers; to call
-the API instead, set DOWNLOAD_CACHE = False.
+Needs no API key: it replays this cookbook's saved answers. To call the API,
+set TYPESAFE_API_KEY and DOWNLOAD_CACHE = False.
 """
 
 import html
@@ -527,7 +527,7 @@ HIERARCHIES = load_hierarchies()
 TYPESAFE_MODEL = "jev-1.14.0"  # the page's model; "jev-latest" runs the newest, live
 BEAM_WIDTH, MAX_DEPTH, EPSILON = 3, 12, 1e-9
 client = TypeSafeClient(
-    api_key=os.environ["TYPESAFE_API_KEY"],
+    api_key=os.environ.get("TYPESAFE_API_KEY", "cache-only"),  # keyless kernels replay the cache
     retry=RetryPolicy(max_retries=5, backoff_initial=1.0, backoff_max=20.0),
 )
 CACHE = Path("hierarchical_classification_cache.json")

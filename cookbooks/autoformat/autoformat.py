@@ -6,8 +6,8 @@
 
 """Structure recovery, from https://console.typesafe.ai/docs/cookbooks/autoformat.
 
-Set TYPESAFE_API_KEY first. It replays this cookbook's saved answers; to call
-the API instead, set DOWNLOAD_CACHE = False.
+Needs no API key: it replays this cookbook's saved answers. To call the API,
+set TYPESAFE_API_KEY and DOWNLOAD_CACHE = False.
 """
 
 import json
@@ -22,7 +22,10 @@ from IPython.display import Markdown, display
 from typesafe_sdk import Choice, Noul, NoulCriteria, TypeSafeClient
 
 TYPESAFE_MODEL = "jev-1.14.0"  # the page's model; "jev-latest" runs the newest, live
-client = TypeSafeClient(api_key=os.environ["TYPESAFE_API_KEY"], timeout=120.0)
+client = TypeSafeClient(
+    api_key=os.environ.get("TYPESAFE_API_KEY", "cache-only"),  # keyless kernels replay the cache
+    timeout=120.0,
+)
 
 EXAMPLES_URL = (
     "https://raw.githubusercontent.com/typesafe-ai/typesafe-public-examples/main/"

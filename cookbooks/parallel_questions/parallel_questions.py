@@ -6,8 +6,8 @@
 
 """Parallel questions, from https://console.typesafe.ai/docs/cookbooks/parallel_questions.
 
-Set TYPESAFE_API_KEY first. It replays this cookbook's saved answers; to call
-the API instead, set DOWNLOAD_CACHE = False.
+Needs no API key: it replays this cookbook's saved answers. To call the API,
+set TYPESAFE_API_KEY and DOWNLOAD_CACHE = False.
 """
 
 import json
@@ -27,7 +27,10 @@ PRICE = (
     0.00,
 )  # $ per 1M tokens (input, output); TypeSafe jev-1.14.0 as of 2026-11, see README
 RUNS = 5  # repeats per batching strategy, to estimate each answer's run-to-run std dev
-client = TypeSafeClient(api_key=os.environ["TYPESAFE_API_KEY"], timeout=120.0)
+client = TypeSafeClient(
+    api_key=os.environ.get("TYPESAFE_API_KEY", "cache-only"),  # keyless kernels replay the cache
+    timeout=120.0,
+)
 
 EXAMPLES_URL = (
     "https://raw.githubusercontent.com/typesafe-ai/typesafe-public-examples/main/"

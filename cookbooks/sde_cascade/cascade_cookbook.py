@@ -6,8 +6,8 @@
 
 """SDE cascade, from https://console.typesafe.ai/docs/cookbooks/sde_cascade.
 
-Set TYPESAFE_API_KEY first. It replays this cookbook's saved answers; to call
-the API instead, set DOWNLOAD_CACHE = False.
+Needs no API key: it replays this cookbook's saved answers. To call the API,
+set TYPESAFE_API_KEY and DOWNLOAD_CACHE = False.
 """
 
 import json
@@ -34,9 +34,10 @@ CONFIGS = {
 TYPESAFE_MODEL = "jev-1.14.0"  # the page's model; "jev-latest" runs the newest, live
 FIRE_T = 0.7  # escalate if any rule's P(broken) exceeds this; also the "<== FIRES" display marker
 
-oai = OpenAI()
+# keyless kernels replay the cache
+oai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "cache-only"))
 
-ts = TypeSafeClient(api_key=os.environ["TYPESAFE_API_KEY"], timeout=30.0)
+ts = TypeSafeClient(api_key=os.environ.get("TYPESAFE_API_KEY", "cache-only"), timeout=30.0)
 
 EXAMPLE = Path("example.json")
 EXAMPLE_URL = (
