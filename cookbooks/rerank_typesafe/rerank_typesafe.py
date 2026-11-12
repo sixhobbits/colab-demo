@@ -5,7 +5,7 @@
 #                 "cooksafe>=0.3.0,<0.4.0"]
 # ///
 
-"""Re-ranking, from https://console.typesafe.ai/docs/cookbooks/rerank_typesafe (version 3).
+"""Re-ranking, from https://console.typesafe.ai/docs/cookbooks/rerank_typesafe.
 
 Needs no API key: it replays this cookbook's saved answers. To call the API,
 set TYPESAFE_API_KEY and DOWNLOAD_CACHE = False.

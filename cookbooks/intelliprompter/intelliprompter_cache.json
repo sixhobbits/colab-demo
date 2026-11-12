@@ -1,0 +1,74 @@
+{
+  "1b1419e0a3bd6870cfce1f38bb48510a8a73d0eee80b256e766185580cc65a83": {
+    "answers": {
+      "c_2_0": {
+        "score": 2.01
+      }
+    }
+  },
+  "31838d5b5169fdf0e08022eb14409b1c0cc7b0620ae8a1a3de1ad55f94384ea0": {
+    "answers": {
+      "c_0_0": {
+        "score": 3.03
+      },
+      "c_0_1": {
+        "score": 1.07
+      },
+      "c_1_0": {
+        "score": 1.0
+      },
+      "c_1_1": {
+        "score": 1.01
+      },
+      "c_2_0": {
+        "score": 1.01
+      }
+    }
+  },
+  "3988cfc8840503746bc784eab89b0fe84376ba2002b5ecab0e7cd57abb533629": {
+    "answers": {
+      "c_0_1": {
+        "score": 3.6
+      },
+      "c_1_0": {
+        "score": 1.01
+      },
+      "c_1_1": {
+        "score": 1.09
+      },
+      "c_2_0": {
+        "score": 1.07
+      }
+    }
+  },
+  "68fea53e4381c11388b8be78e8f768ae049aa2db8e98c056baa32e4eabd4ff25": {
+    "answers": {
+      "c_1_0": {
+        "score": 3.45
+      },
+      "c_1_1": {
+        "score": 1.1
+      },
+      "c_2_0": {
+        "score": 1.11
+      }
+    }
+  },
+  "6b0f403141feb119565f27aa8dc65aef87ffd90b5c05e45e09e5e972dda55399": {
+    "answers": {
+      "c_2_0": {
+        "score": 3.76
+      }
+    }
+  },
+  "face32ad4ebe62eab6e3013113a06f3cf43eee6f79f6f6d7e73a2fb3bdc42258": {
+    "answers": {
+      "c_1_1": {
+        "score": 3.36
+      },
+      "c_2_0": {
+        "score": 1.12
+      }
+    }
+  }
+}
