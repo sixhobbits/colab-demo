@@ -1,0 +1,25 @@
+  %%{init: {"flowchart": {"rankSpacing": 45, "wrappingWidth": 260}}}%%
+flowchart LR
+    order["order<br/><i>large oat milk latte and<br/>a blueberry muffin</i>"]
+
+    subgraph local["your code"]
+        direction TB
+        options["build the options<br/><b>remaining menu items<br/>+ nothing_else</b>"]
+        save["save the selected item<br/>and drop it from<br/>the next request"]
+    end
+
+    subgraph jev["TypeSafe AI model: Jev"]
+        choice["<b>Choice:</b> which remaining<br/>item does the order mention?"]
+    end
+
+    order --> choice
+    options --> choice
+    choice --> result{"selected option"}
+    result green_item@-->|"a menu item"| save
+    save -.-> options
+    result purple_stop@-->|"nothing_else"| stop["stop the loop"]
+    %% Branch colours (styles.css): node classes and green_/blue_/purple_/orange_ edge ids.
+    %% "your code" is not a TypeSafe request, so it opts out of the pink boundary.
+    style local fill:none,stroke:#71717a,stroke-width:1.5px,stroke-dasharray: 6 4
+    class save neonGreen
+    class stop neonPurple

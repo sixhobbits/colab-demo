@@ -1,0 +1,45 @@
+name: Runner Chrome test
+
+# Draws real cookbook diagrams with mermaid-cli and the runner's Chrome, with the same
+# command, config and Chrome path as the docs repo's publish workflow.
+on:
+  push:
+    branches: [ci-chrome-test]
+
+permissions:
+  contents: read
+
+jobs:
+  draw:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runner tools
+        run: |
+          python3 --version
+          node --version
+          /usr/bin/google-chrome --version
+      - name: Draw every diagram
+        working-directory: ci-chrome-test
+        run: |
+          mkdir -p out
+          cli=$(python3 -c 'import json; print(json.load(open("params.json"))["cli"])')
+          scale=$(python3 -c 'import json; print(json.load(open("params.json"))["scale"])')
+          for mmd in *.mmd; do
+            npx --yes -p "$cli" mmdc --quiet -i "$mmd" -o "out/${mmd%.mmd}.png" \
+              -c config.json -p puppeteer.json -s "$scale" -b white
+          done
+          python3 - <<'EOF'
+          import struct
+          from pathlib import Path
+          for png in sorted(Path("out").glob("*.png")):
+              w, h = struct.unpack(">II", png.read_bytes()[16:24])
+              print(f"{png.name}: {w}x{h}, {png.stat().st_size} bytes")
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: diagrams
+          path: ci-chrome-test/out

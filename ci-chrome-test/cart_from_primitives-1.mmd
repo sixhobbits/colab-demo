@@ -1,0 +1,37 @@
+  %%{init: {"flowchart": {"rankSpacing": 40, "wrappingWidth": 260}}}%%
+flowchart TB
+    order["order<br/><i>large oat milk latte and a blueberry muffin</i>"]
+
+    subgraph stage1["stage 1 · find the items"]
+        %% RL: the loop edge makes dagre rank the Jev box first, so RL puts your code on the left.
+        direction RL
+        itemLoop["shrinking-options loop<br/>in your code"]
+        subgraph jev1["TypeSafe AI model: Jev"]
+            itemChoice["<b>one Choice question<br/>per request</b>"]
+        end
+        itemLoop --> itemChoice
+        itemChoice -. "selected item" .-> itemLoop
+    end
+
+    items["found items"]
+
+    subgraph stage2["stage 2 · fill the known fields"]
+        direction LR
+        fieldQuestions["your code builds<br/><b>one Choice per field</b>"]
+        subgraph jev2["TypeSafe AI model: Jev"]
+            fieldBatch["<b>one request per item<br/>with all its field questions</b>"]
+        end
+        fieldQuestions --> fieldBatch
+    end
+
+    cart["your code assembles the cart"]
+
+    order --> stage1
+    stage1 green_done@-->|"nothing_else"| items
+    items --> stage2
+    stage2 green_cart@--> cart
+    %% Branch colours (styles.css): node classes and green_/blue_/purple_/orange_ edge ids.
+    %% The stages group your code with the Jev call, so they are neutral; only the Jev boxes are pink.
+    style stage1 fill:none,stroke:#71717a,stroke-width:1.5px,stroke-dasharray: 6 4
+    style stage2 fill:none,stroke:#71717a,stroke-width:1.5px,stroke-dasharray: 6 4
+    class items,cart neonGreen

@@ -1,0 +1,27 @@
+flowchart LR
+    q["query excerpt<br/><i>one opinion passage,<br/>citation removed</i>"]
+    sl["shortlist from fast search"]
+    quest["<b>one Noul</b><br/>could this candidate be<br/>from the cited precedent?<br/><i>criteria fix true and false</i>"]
+
+    %% direction LR inside an LR chart keeps each state beside its noul, two columns,
+    %% so the fan-out is four rows tall instead of eight
+    subgraph fan["one request per candidate · no request sees another"]
+        direction LR
+        d1["state<br/>{query, candidate 1}"] --> n1["noul<br/>0.87"]
+        d2["state<br/>{query, candidate 2}"] --> n2["noul<br/>0.41"]
+        dx["⋮"] --> nx["⋮"]
+        d30["state<br/>{query, candidate n}"] --> n30["noul<br/>0.12"]
+    end
+
+    sort["sort by noul,<br/>highest first"]
+    out["re-ranked shortlist<br/><i>same candidates, better order</i>"]
+
+    q --> fan
+    sl --> fan
+    quest --> fan
+    fan --> sort --> out
+
+    %% the elision is not a node, so drop its box and it reads as "and so on"
+    classDef elide fill:none,stroke:none
+    class dx,nx elide
+    linkStyle 2 stroke:none
